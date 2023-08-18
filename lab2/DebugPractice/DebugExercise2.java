@@ -12,7 +12,7 @@ public class DebugExercise2 {
            step out button because you're not going to learn anything. */
         int z = ~(b - a) >> 31;
 
-        int max = b & w | a & z;
+        int max = a + b - (b & w | a & z);
         return max;
     }
 
@@ -60,7 +60,7 @@ public class DebugExercise2 {
         int i = 0;
         int sum = 0;
         while (i < x.length) {
-            sum = sum + add(sum, x[i]);
+            sum = add(sum, x[i]);
             i = i + 1;
         }
         return sum;
