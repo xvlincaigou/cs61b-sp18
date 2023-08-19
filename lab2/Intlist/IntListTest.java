@@ -2,7 +2,7 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-public class IntListTest {
+public class IntListTest2 {
 
     /**
      * Example test that verifies correctness of the IntList.of static

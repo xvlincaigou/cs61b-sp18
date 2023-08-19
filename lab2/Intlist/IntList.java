@@ -111,7 +111,31 @@ public class IntList {
         p.first = q.first;
         return r;
     }
-
+    public static void read(IntList a){
+        while(a != null){
+            System.out.print(a.first);
+            a = a.rest;
+        }
+        System.out.println("");
+    }
+    public static void main(String[] args){
+        IntList a = new IntList(0,null);
+        a = new IntList(10,a);
+        a = new IntList(20, a);
+        a = new IntList(30, a);
+        a = new IntList(40,a);
+        a = new IntList(50,a);
+        IntList b = new IntList(100,null);
+        b = new IntList(1000,b);
+        b = new IntList(2000, b);
+        b = new IntList(3000, b);
+        b = new IntList(4000,b);
+        b = new IntList(5000,b);
+        read(catenate(a,b));
+        read(a);
+        read(dcatenate(a, b));
+        read(a);
+    }
 
 
 
