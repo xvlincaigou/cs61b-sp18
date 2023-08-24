@@ -24,7 +24,7 @@ public class Palindrome {
             return true;
         }
         for(int i = 0;2 * i <= p.size();++ i){
-            if(!(cc.equalChars(p.get(i),p.get(p.size() - 1 - i)))){
+            if((!(cc.equalChars(p.get(i),p.get(p.size() - 1 - i))))&&(2 * i + 1 != p.size())){
                 return false;
             }
         }
