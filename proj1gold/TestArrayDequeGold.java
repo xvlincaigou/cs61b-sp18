@@ -5,20 +5,22 @@ public class TestArrayDequeGold {
     public void testArrayDequeGold(){
         ArrayDequeSolution<Integer> p = new ArrayDequeSolution<>();
         StudentArrayDeque<Integer> q = new StudentArrayDeque<>();
+        String bug = new String();
         for(int i = 0;i < 1000;++ i){
             Integer x = StdRandom.uniform(200);
             if(x < 100){
                 p.addLast(x);
                 q.addLast(x);
-                assertEquals("addLast(" + x + ")\n",x,x);
+                bug = bug + "addLast(" + x + ")\n";
             }else{
                 p.addFirst(x);
                 q.addFirst(x);
-                assertEquals("addFirst(" + x + ")\n",x,x);
+                bug = bug + "addFirst(" + x + ")\n";
             }
         }
         for(int i = 0;i < 500;++ i){
-            assertEquals("removeLast()\n" + i,p.removeLast(),q.removeLast());
+            bug = bug + "removeLast()\n";
+            assertEquals(bug,p.removeLast(),q.removeLast());
         }
     }
 }
