@@ -10,13 +10,15 @@ public class TestArrayDequeGold {
             if(x < 100){
                 p.addLast(x);
                 q.addLast(x);
+                assertEquals("addLast(" + x + ")\n",x,x);
             }else{
                 p.addFirst(x);
                 q.addFirst(x);
+                assertEquals("addFirst(" + x + ")\n",x,x);
             }
         }
         for(int i = 0;i < 500;++ i){
-            assertEquals("removeLast()\n",p.removeLast(),q.removeLast());
+            assertEquals("removeLast()\n" + i,p.removeLast(),q.removeLast());
         }
     }
 }
