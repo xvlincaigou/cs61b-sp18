@@ -4,7 +4,7 @@ import edu.princeton.cs.algs4.WeightedQuickUnionUF;
 
 public class Percolation {
 
-    private boolean blocks[][];
+    private boolean[][] blocks;
     private int numberOfOpenSites;
     private WeightedQuickUnionUF blockSet;
     private final int edgeLength;
@@ -15,10 +15,16 @@ public class Percolation {
 
     // create N-by-N grid, with all sites initially blocked
     public Percolation(int N) {
-        if (N <= 0)
+        if (N <= 0) {
             throw new IllegalArgumentException();
+        }
         edgeLength = N;
         blocks = new boolean[edgeLength][edgeLength];
+        for (int i = 0; i < edgeLength; ++ i) {
+            for (int j = 0; j < edgeLength; ++ j) {
+                blocks[i][j] = false;
+            }
+        }
         numberOfOpenSites = 0;
         blockSet = new WeightedQuickUnionUF(N * N + 2);
         for (int i = 0; i < edgeLength; i++) {
@@ -31,8 +37,9 @@ public class Percolation {
 
     // open the site (row, col) if it is not open already
     public void open(int row, int col) {
-        if (!isLegalPos(row, col))
+        if (!isLegalPos(row, col)) {
             throw new java.lang.IndexOutOfBoundsException();
+        }
         numberOfOpenSites += blocks[row][col] ? 0 : 1;
         blocks[row][col] = true;
         if (isLegalPos(row - 1, col) && isOpen(row - 1, col)) {
@@ -54,12 +61,12 @@ public class Percolation {
         if (!isLegalPos(row, col)) {
             throw new java.lang.IndexOutOfBoundsException();
         }
-        return !blocks[row][col];
+        return blocks[row][col];
     }
 
     // is the site (row, col) full?
     public boolean isFull(int row, int col) {
-        return !isOpen(row, col);
+        return isOpen(row, col) && blockSet.connected(row * edgeLength + col, edgeLength * edgeLength);
     }
 
     // number of open sites
