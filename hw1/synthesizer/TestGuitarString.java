@@ -52,6 +52,17 @@ public class TestGuitarString {
 
     }
 
+    // 测试方法中的一个示例
+    @Test
+    public void testTic_() {
+        GuitarString string = new GuitarString(440);
+        string.pluck(); // 初始化缓冲区为白噪声
+        double sampleBefore = string.sample();
+        string.tic(); // 模拟一次振动
+        double sampleAfter = string.sample();
+        assertNotEquals("After tic(), the sample should not stay the same.", sampleBefore, sampleAfter);
+    }
+
     /** Calls tests for GuitarString. */
     public static void main(String[] args) {
         jh61b.junit.textui.runClasses(TestGuitarString.class);
