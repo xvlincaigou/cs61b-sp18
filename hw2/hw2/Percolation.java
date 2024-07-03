@@ -35,21 +35,26 @@ public class Percolation {
             throw new java.lang.IndexOutOfBoundsException();
         numberOfOpenSites += blocks[row][col] ? 0 : 1;
         blocks[row][col] = true;
-        if (isLegalPos(row - 1, col) && isOpen(row - 1, col))
+        if (isLegalPos(row - 1, col) && isOpen(row - 1, col)) {
             blockSet.union((row - 1) * edgeLength + col, row * edgeLength + col);
-        if (isLegalPos(row + 1, col) && isOpen(row + 1, col))
+        }
+        if (isLegalPos(row + 1, col) && isOpen(row + 1, col)) {
             blockSet.union((row + 1) * edgeLength + col, row * edgeLength + col);
-        if (isLegalPos(row, col - 1) && isOpen(row, col - 1))
+        }
+        if (isLegalPos(row, col - 1) && isOpen(row, col - 1)) {
             blockSet.union(row * edgeLength + (col - 1), row * edgeLength + col);
-        if (isLegalPos(row, col + 1) && isOpen(row, col + 1))
+        }
+        if (isLegalPos(row, col + 1) && isOpen(row, col + 1)) {
             blockSet.union(row * edgeLength + (col + 1), row * edgeLength + col);
+        }
     }
 
     // is the site (row, col) open?
     public boolean isOpen(int row, int col) {
-        if (!isLegalPos(row, col))
+        if (!isLegalPos(row, col)) {
             throw new java.lang.IndexOutOfBoundsException();
-        return blocks[row][col];
+        }
+        return !blocks[row][col];
     }
 
     // is the site (row, col) full?
@@ -65,5 +70,9 @@ public class Percolation {
     // does the system percolate?
     public boolean percolates() {
         return blockSet.connected(edgeLength * edgeLength, edgeLength * edgeLength + 1);
+    }
+
+    public static void main(String[] args) {
+
     }
 }
