@@ -58,7 +58,10 @@ public class ArrayRingBuffer<T> extends AbstractBoundedQueue<T>{
     /**
      * Return oldest item, but don't remove it.
      */
-    public T peek() throws RuntimeException {
+    public T peek() {
+        if (fillCount == 0) {
+            throw new RuntimeException("Ring Buffer Underflow");
+        }
         return rb[first];
     }
 
@@ -69,7 +72,9 @@ public class ArrayRingBuffer<T> extends AbstractBoundedQueue<T>{
 
     public class ArrayRingBufferIterator implements Iterator<T>{
         private int pos;
+        private boolean steppedIntoFirst;
         public ArrayRingBufferIterator() {
+            steppedIntoFirst = false;
             pos = first;
         }
 
@@ -77,11 +82,14 @@ public class ArrayRingBuffer<T> extends AbstractBoundedQueue<T>{
         public boolean hasNext() {
             if (isEmpty())
                 return false;
-            return pos <= last && first <= last || first > last && (pos >= first || pos <= last);
+            return (pos <= last && first <= last && (! (pos == first && steppedIntoFirst))) || (first > last && (pos >= first || pos <= last) && (! (pos == first && steppedIntoFirst)));
         }
 
         public T next() {
             T toReturn = rb[pos];
+            if (pos == first) {
+                steppedIntoFirst = true;
+            }
             pos = (pos + 1) % capacity;
             return toReturn;
         }
