@@ -28,7 +28,7 @@ public class PercolationStats {
         for (int i = 0; i < T; i++) {
             sum += data[i];
         }
-        return sum / T;
+        return sum / T * N * N;
     }
 
     public double stddev() {
@@ -50,10 +50,5 @@ public class PercolationStats {
         double mean = mean();
         double stddev = stddev();
         return mean + (1.96 * stddev / Math.sqrt(T));
-    }
-
-    public static void main(String[] args) {
-        PercolationStats stats = new PercolationStats(10, 10, new PercolationFactory());
-        System.out.println(stats.mean());
     }
 }
