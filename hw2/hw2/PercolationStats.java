@@ -17,7 +17,9 @@ public class PercolationStats {
             Percolation problem = pf.make(N);
             while (!problem.percolates()) {
                 int x = new Random().nextInt(N), y = new Random().nextInt(N);
-                problem.open(x, y);
+                if (!problem.isOpen(x, y)) {
+                    problem.open(x, y);
+                }
             }
             this.data[i] = problem.numberOfOpenSites();
         }
