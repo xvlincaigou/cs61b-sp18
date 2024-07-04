@@ -4,15 +4,15 @@ import java.util.Random;
 
 public class PercolationStats {
 
-    private int N;
-    private int T;
-    private int[] data;
+    private final int N;
+    private final int T;
+    private double[] data;
 
     // perform T independent experiments on an N-by-N grid
     public PercolationStats(int N, int T, PercolationFactory pf) {
         this.N = N;
         this.T = T;
-        this.data = new int[T];
+        this.data = new double[T];
         for (int i = 0; i < T; ++ i) {
             Percolation problem = pf.make(N);
             while (!problem.percolates()) {
@@ -21,7 +21,7 @@ public class PercolationStats {
                     problem.open(x, y);
                 }
             }
-            this.data[i] = problem.numberOfOpenSites();
+            this.data[i] = (double) problem.numberOfOpenSites() / (N * N);
         }
     }
 
@@ -30,7 +30,7 @@ public class PercolationStats {
         for (int i = 0; i < T; i++) {
             sum += data[i];
         }
-        return sum / T * N * N;
+        return sum / T;
     }
 
     public double stddev() {
@@ -52,5 +52,17 @@ public class PercolationStats {
         double mean = mean();
         double stddev = stddev();
         return mean + (1.96 * stddev / Math.sqrt(T));
+    }
+
+    public static void main(String[] args) {
+        int N = 20; // 网格大小
+        int T = 10; // 实验次数
+    
+        PercolationFactory pf = new PercolationFactory();
+        PercolationStats stats = new PercolationStats(N, T, pf);
+    
+        System.out.println("Mean (平均值): " + stats.mean());
+        System.out.println("StdDev (标准差): " + stats.stddev());
+        System.out.println("95% Confidence Interval (95%置信区间): [" + stats.confidenceLow() + ", " + stats.confidenceHigh() + "]");
     }
 }
