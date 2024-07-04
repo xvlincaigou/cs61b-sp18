@@ -4,10 +4,11 @@ import edu.princeton.cs.algs4.WeightedQuickUnionUF;
 
 public class Percolation {
 
-    private boolean[][] blocks;
-    private int numberOfOpenSites;
-    private WeightedQuickUnionUF blockSet;
     private final int edgeLength;
+    private boolean[][] isOpen;
+    private int numberOfOpenSites;
+    private WeightedQuickUnionUF isWet;
+    private WeightedQuickUnionUF isFull;
 
     private boolean isLegalPos(int row, int col) {
         return row >= 0 && row <= edgeLength - 1 && col >= 0 && col <= edgeLength - 1;
@@ -19,20 +20,15 @@ public class Percolation {
             throw new IllegalArgumentException();
         }
         edgeLength = N;
-        blocks = new boolean[edgeLength][edgeLength];
+        isOpen = new boolean[edgeLength][edgeLength];
         for (int i = 0; i < edgeLength; ++ i) {
             for (int j = 0; j < edgeLength; ++ j) {
-                blocks[i][j] = false;
+                isOpen[i][j] = false;
             }
         }
         numberOfOpenSites = 0;
-        blockSet = new WeightedQuickUnionUF(N * N + 2);
-        for (int i = 0; i < edgeLength; i++) {
-            // 将第一行的节点与顶部虚拟节点连接
-            blockSet.union(i, N * N);
-            // 将最后一行的节点与底部虚拟节点连接
-            blockSet.union(N * (N - 1) + i, N * N + 1);
-        }
+        isWet = new WeightedQuickUnionUF(N * N + 2);
+        isFull = new WeightedQuickUnionUF(N * N + 1);
     }
 
     // open the site (row, col) if it is not open already
@@ -40,19 +36,33 @@ public class Percolation {
         if (!isLegalPos(row, col)) {
             throw new java.lang.IndexOutOfBoundsException();
         }
-        numberOfOpenSites += blocks[row][col] ? 0 : 1;
-        blocks[row][col] = true;
+        // 本身打开
+        numberOfOpenSites += isOpen[row][col] ? 0 : 1;
+        isOpen[row][col] = true;
+        // 是否被湿润，和周围的联通
+        // 是否full，这个没有最底下的那个虚拟的块
+        if (row == 0) {
+            isWet.union(edgeLength * edgeLength, col);
+            isFull.union(edgeLength * edgeLength, col);
+        }
+        if (row == edgeLength - 1) {
+            isWet.union(edgeLength * edgeLength + 1, row * edgeLength + col);
+        }
         if (isLegalPos(row - 1, col) && isOpen(row - 1, col)) {
-            blockSet.union((row - 1) * edgeLength + col, row * edgeLength + col);
+            isWet.union((row - 1) * edgeLength + col, row * edgeLength + col);
+            isFull.union((row - 1) * edgeLength + col, row * edgeLength + col);
         }
         if (isLegalPos(row + 1, col) && isOpen(row + 1, col)) {
-            blockSet.union((row + 1) * edgeLength + col, row * edgeLength + col);
+            isWet.union((row + 1) * edgeLength + col, row * edgeLength + col);
+            isFull.union((row + 1) * edgeLength + col, row * edgeLength + col);
         }
         if (isLegalPos(row, col - 1) && isOpen(row, col - 1)) {
-            blockSet.union(row * edgeLength + (col - 1), row * edgeLength + col);
+            isWet.union(row * edgeLength + (col - 1), row * edgeLength + col);
+            isFull.union(row * edgeLength + (col - 1), row * edgeLength + col);
         }
         if (isLegalPos(row, col + 1) && isOpen(row, col + 1)) {
-            blockSet.union(row * edgeLength + (col + 1), row * edgeLength + col);
+            isWet.union(row * edgeLength + (col + 1), row * edgeLength + col);
+            isFull.union(row * edgeLength + (col + 1), row * edgeLength + col);
         }
     }
 
@@ -61,12 +71,12 @@ public class Percolation {
         if (!isLegalPos(row, col)) {
             throw new java.lang.IndexOutOfBoundsException();
         }
-        return blocks[row][col];
+        return isOpen[row][col];
     }
 
     // is the site (row, col) full?
     public boolean isFull(int row, int col) {
-        return isOpen(row, col) && blockSet.connected(row * edgeLength + col, edgeLength * edgeLength);
+        return isOpen(row, col) && isFull.connected(row * edgeLength + col, edgeLength * edgeLength);
     }
 
     // number of open sites
@@ -76,7 +86,7 @@ public class Percolation {
 
     // does the system percolate?
     public boolean percolates() {
-        return blockSet.connected(edgeLength * edgeLength, edgeLength * edgeLength + 1);
+        return isWet.connected(edgeLength * edgeLength, edgeLength * edgeLength + 1);
     }
 
     public static void main(String[] args) {
