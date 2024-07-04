@@ -21,8 +21,8 @@ public class Percolation {
         }
         edgeLength = N;
         isOpen = new boolean[edgeLength][edgeLength];
-        for (int i = 0; i < edgeLength; ++ i) {
-            for (int j = 0; j < edgeLength; ++ j) {
+        for (int i = 0; i < edgeLength; ++i) {
+            for (int j = 0; j < edgeLength; ++j) {
                 isOpen[i][j] = false;
             }
         }
@@ -76,7 +76,7 @@ public class Percolation {
 
     // is the site (row, col) full?
     public boolean isFull(int row, int col) {
-        return isOpen(row, col) && isFull.connected(row * edgeLength + col, edgeLength * edgeLength);
+        return isOpen(row, col)&&isFull.connected(row * edgeLength + col, edgeLength * edgeLength);
     }
 
     // number of open sites

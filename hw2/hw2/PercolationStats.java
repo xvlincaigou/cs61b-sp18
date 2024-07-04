@@ -1,28 +1,59 @@
 package hw2;
 
+import java.util.Random;
+
 public class PercolationStats {
+
+    private int N;
+    private int T;
+    private int[] data;
+
     // perform T independent experiments on an N-by-N grid
     public PercolationStats(int N, int T, PercolationFactory pf) {
-
+        this.N = N;
+        this.T = T;
+        this.data = new int[T];
+        for (int i = 0; i < T; ++ i) {
+            Percolation problem = pf.make(N);
+            while (!problem.percolates()) {
+                int x = new Random().nextInt(N), y = new Random().nextInt(N);
+                problem.open(x, y);
+            }
+            this.data[i] = problem.numberOfOpenSites();
+        }
     }
 
-    // sample mean of percolation threshold
     public double mean() {
-        return 0.0;
+        double sum = 0.0;
+        for (int i = 0; i < T; i++) {
+            sum += data[i];
+        }
+        return sum / T;
     }
 
-    // sample standard deviation of percolation threshold
     public double stddev() {
-        return 0.0;
+        double mean = mean();
+        double sum = 0.0;
+        for (int i = 0; i < T; i++) {
+            sum += Math.pow(data[i] - mean, 2);
+        }
+        return Math.sqrt(sum / (T - 1));
     }
 
-    // low endpoint of 95% confidence interval
     public double confidenceLow() {
-        return 0.0;
+        double mean = mean();
+        double stddev = stddev();
+        return mean - (1.96 * stddev / Math.sqrt(T));
     }
 
-    // high endpoint of 95% confidence interval
     public double confidenceHigh() {
-        return 0.0;
+        double mean = mean();
+        double stddev = stddev();
+        return mean + (1.96 * stddev / Math.sqrt(T));
+    }
+
+    public static void main(String[] args) {
+        PercolationStats stats = new PercolationStats(10, 10, new PercolationFactory());
+        System.out.println(stats.mean());
     }
 }
