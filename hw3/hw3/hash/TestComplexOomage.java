@@ -39,7 +39,7 @@ public class TestComplexOomage {
         List<Oomage> deadlyList = new ArrayList<>();
 
         for (int i = 0; i < 100; i++) {
-            int listSize = StdRandom.uniform(1, 10); // 生成1到10之间的随机数作为list的长度
+            int listSize = StdRandom.uniform(1, 100); // 生成1到10之间的随机数作为list的长度
             List<Integer> params = new ArrayList<>();
             for (int j = 0; j < listSize; j++) {
                 params.add(1); // 使用相同的值填充，例如1
