@@ -63,6 +63,6 @@ public class QuickSort {
         Item pivot = getRandomItem(items);
         Queue<Item> less = new Queue<>(), equal = new Queue<>(), greater = new Queue<>();
         partition(items, pivot, less, equal, greater);
-        return catenate(catenate(quickSort(less), quickSort(equal)), quickSort(greater));
+        return catenate(catenate(quickSort(less), equal), quickSort(greater));
     }
 }
