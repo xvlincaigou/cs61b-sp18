@@ -74,6 +74,48 @@ public class MergeSort {
         Queue<Item> subQueue = new Queue<>();
         for (int i = 0; i < halfSize; ++ i)
             subQueue.enqueue(items.dequeue());
-        return mergeSortedQueues(items, subQueue);
+        return mergeSortedQueues(mergeSort(items), mergeSort(subQueue));
+    }
+
+    
+    public static void main(String[] args) {
+        // 创建测试数据队列
+        Queue<Integer> testQueue = new Queue<>();
+        testQueue.enqueue(3);
+        testQueue.enqueue(8);
+        testQueue.enqueue(2);
+        testQueue.enqueue(0);
+        testQueue.enqueue(7);
+        testQueue.enqueue(9);
+        testQueue.enqueue(5);
+        testQueue.enqueue(0);
+        testQueue.enqueue(9);
+        testQueue.enqueue(9);
+
+        // 打印原始队列
+        System.out.println("原始队列: " + testQueue);
+
+        // 对队列进行排序
+        Queue<Integer> sortedQueue = MergeSort.mergeSort(testQueue);
+
+        // 打印排序后的队列
+        System.out.println("排序后的队列: " + sortedQueue);
+
+        // 验证排序是否正确
+        boolean isSorted = true;
+        int previous = Integer.MIN_VALUE;
+        for (int item : sortedQueue) {
+            if (item < previous) {
+                isSorted = false;
+                break;
+            }
+            previous = item;
+        }
+
+        if (isSorted) {
+            System.out.println("队列正确排序。");
+        } else {
+            System.out.println("队列排序错误。");
+        }
     }
 }
