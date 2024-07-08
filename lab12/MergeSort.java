@@ -1,4 +1,5 @@
 import edu.princeton.cs.algs4.Queue;
+import java.util.Iterator;
 
 public class MergeSort {
     /**
@@ -71,10 +72,14 @@ public class MergeSort {
         if (items.size() <= 1)
             return items;
         int halfSize = items.size() / 2;
-        Queue<Item> subQueue = new Queue<>();
-        for (int i = 0; i < halfSize; ++ i)
-            subQueue.enqueue(items.dequeue());
-        return mergeSortedQueues(mergeSort(items), mergeSort(subQueue));
+        Queue<Item> subQueue1 = new Queue<>();
+        Queue<Item> subQueue2 = new Queue<>();
+        Iterator<Item> iter = items.iterator();
+        for (int i = 0; i < halfSize; i++)
+            subQueue1.enqueue(iter.next());
+        while (iter.hasNext())
+            subQueue2.enqueue(iter.next());
+        return mergeSortedQueues(mergeSort(subQueue1), mergeSort(subQueue2));
     }
 
     
