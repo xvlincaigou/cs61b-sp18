@@ -7,6 +7,7 @@ import java.util.PriorityQueue;
 public class Solver {
     private ArrayList<WorldState> solution = new ArrayList<>();
     private int moves = 0;
+    private int totalEnqueued = 0;
 
     public Solver(WorldState initial) {
         HashMap<WorldState, WorldState> edgeTo = new HashMap<>();
@@ -16,6 +17,7 @@ public class Solver {
         });
 
         pq.add(initial);
+        totalEnqueued += 1;
         distTo.put(initial, 0);
 
         while (!pq.isEmpty()) {
@@ -35,6 +37,7 @@ public class Solver {
                     distTo.put(neighbor, tentativeDist);
                     edgeTo.put(neighbor, current);
                     pq.add(neighbor);
+                    totalEnqueued += 1;
                 }
             }
         }
@@ -46,5 +49,9 @@ public class Solver {
 
     public Iterable<WorldState> solution() {
         return solution;
+    }
+
+    public int totalEnqueued() {
+        return totalEnqueued;
     }
 }
