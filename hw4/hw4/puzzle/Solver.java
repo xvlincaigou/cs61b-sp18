@@ -1,57 +1,37 @@
 package hw4.puzzle;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.PriorityQueue;
+import edu.princeton.cs.algs4.MinPQ;
+import java.util.LinkedList;
 
 public class Solver {
-    private ArrayList<WorldState> solution = new ArrayList<>();
-    private int moves = 0;
-    private int totalEnqueued = 0;
+    private LinkedList<WorldState> solution;
 
     public Solver(WorldState initial) {
-        HashMap<WorldState, WorldState> edgeTo = new HashMap<>();
-        HashMap<WorldState, Integer> distTo = new HashMap<>();
-        PriorityQueue<WorldState> pq = new PriorityQueue<>((a, b) -> {
-            return distTo.get(a) + a.estimatedDistanceToGoal() - distTo.get(b) - b.estimatedDistanceToGoal();
-        });
-
-        pq.add(initial);
-        totalEnqueued += 1;
-        distTo.put(initial, 0);
-
+        MinPQ<SearchNode> pq = new MinPQ<>();
+        pq.insert(new SearchNode(initial, 0, null));
+        SearchNode current = null;
         while (!pq.isEmpty()) {
-            WorldState current = pq.poll();
-
-            if (current.isGoal()) {
-                for (WorldState state = current; state != null; state = edgeTo.get(state)) {
-                    solution.add(0, state);
-                }
-                moves = solution.size() - 1;
-                return;
-            }
-
-            for (WorldState neighbor : current.neighbors()) {
-                int tentativeDist = distTo.get(current) + 1;
-                if (!distTo.containsKey(neighbor) || tentativeDist < distTo.get(neighbor)) {
-                    distTo.put(neighbor, tentativeDist);
-                    edgeTo.put(neighbor, current);
-                    pq.add(neighbor);
-                    totalEnqueued += 1;
+            current = pq.delMin();
+            if (current.ws.isGoal())
+                break;
+            for (WorldState neighbor : current.ws.neighbors()) {
+                if (current.prev == null || !neighbor.equals(current.prev.ws)) {
+                    pq.insert(new SearchNode(neighbor, current.moves + 1, current));
                 }
             }
+        }
+        solution = new LinkedList<>();
+        while (current != null) {
+            solution.addFirst(current.ws);
+            current = current.prev;
         }
     }
 
     public int moves() {
-        return moves;
+        return solution.size() - 1;
     }
 
     public Iterable<WorldState> solution() {
         return solution;
-    }
-
-    public int totalEnqueued() {
-        return totalEnqueued;
     }
 }
