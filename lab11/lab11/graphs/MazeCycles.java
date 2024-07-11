@@ -9,16 +9,36 @@ public class MazeCycles extends MazeExplorer {
     public int[] edgeTo;
     public boolean[] marked;
     */
-
+    private boolean cycleDetected = false;
     public MazeCycles(Maze m) {
         super(m);
     }
 
-    @Override
-    public void solve() {
-        // TODO: Your code here!
+    private void dfs(int v, int parent) {
+        marked[v] = true;
+        announce();
+
+        for (int w : maze.adj(v)) {
+            if (!marked[w]) {
+                edgeTo[w] = v;
+                dfs(w, v);
+                if (cycleDetected) return;
+            } else if (w != parent) {
+                cycleDetected = true;
+                announce();
+                return;
+            }
+        }
     }
 
-    // Helper methods go here
+    @Override
+    public void solve() {
+        for (int v = 0; v < maze.V(); v++) {
+            if (!marked[v]) {
+                dfs(v, -1);
+                if (cycleDetected) break;
+            }
+        }
+    }
 }
 
