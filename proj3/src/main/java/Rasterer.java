@@ -77,6 +77,7 @@ public class Rasterer {
         int lonEnd = (int) Math.round(Math.floor((lrlon - MapServer.ROOT_ULLON) / (lonDPP * MapServer.TILE_SIZE)));
         int latStart = (int) Math.round(Math.floor((MapServer.ROOT_ULLAT - ullat) / (latDPP * MapServer.TILE_SIZE)));
         int latEnd = (int) Math.round(Math.floor((MapServer.ROOT_ULLAT - lrlat) / (latDPP * MapServer.TILE_SIZE)));
+        boolean success = lonStart <= lonEnd && latStart <= latEnd && lonStart >= 0 && latStart >= 0 && lonEnd < Math.pow(2, depth) && latEnd < Math.pow(2, depth);
 
         xStart = Math.max(lonStart, 0);
         xEnd = lonEnd > Math.pow(2, depth) - 1 ? (int) Math.pow(2, depth) - 1 : lonEnd;
@@ -115,7 +116,7 @@ public class Rasterer {
         results.put("depth", depth);
 
         // 7. "query_success" : Boolean, whether the query was able to successfully complete; don't forget to set this to true on success!
-        results.put("query_success", true);
+        results.put("query_success", success);
 
         return results;
     }
