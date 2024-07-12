@@ -9,9 +9,10 @@ import java.util.Map;
  */
 public class Rasterer {
 
-    public Rasterer() {
-        // YOUR CODE HERE
-    }
+    private static final double ROOT_LONDPP = (MapServer.ROOT_LRLON - MapServer.ROOT_ULLON) / MapServer.TILE_SIZE;
+    private static final double ROOT_LATDPP = (MapServer.ROOT_ULLAT - MapServer.ROOT_LRLAT) / MapServer.TILE_SIZE;
+
+    public Rasterer() {}
 
     /**
      * Takes a user query and finds the grid of images that best matches the query. These
@@ -41,11 +42,81 @@ public class Rasterer {
      * "query_success" : Boolean, whether the query was able to successfully complete; don't
      *                    forget to set this to true on success! <br>
      */
+    private double LonDPP(double lrlon, double ullon, double width) {
+        return (lrlon - ullon) / width;
+    }
+
+    private double LatDPP(double lrlat, double ullat, double height) {
+        return (ullat - lrlat) / height;
+    }
+
     public Map<String, Object> getMapRaster(Map<String, Double> params) {
-        // System.out.println(params);
+        //System.out.println(params);
+        // First, we should get the query box and the user viewport width and height.
+        double ullon = params.get("ullon");
+        double ullat = params.get("ullat");
+        double lrlon = params.get("lrlon");
+        double lrlat = params.get("lrlat");
+        double width = params.get("w");
+        double height = params.get("h");
+
+        // Next, we should compute the LonDPP and LatDPP of the query box.
+        double LonDPP = LonDPP(lrlon, ullon, width);
+        double LatDPP = LatDPP(lrlat, ullat, height);
+
+        // Then, we should find the depth of the grid that best matches the query box.
+        int depth = 0;
+        while ((LonDPP < ROOT_LONDPP / Math.pow(2, depth) || LatDPP < ROOT_LATDPP / Math.pow(2, depth)) && depth < 7) {
+            depth++;
+        }
+
+        // Now, we should find the grid of images that best matches the query.
+        int xStart = 0, xEnd = 0, yStart = 0, yEnd = 0;
+        double lonDPP = ROOT_LONDPP / Math.pow(2, depth), latDPP = ROOT_LATDPP / Math.pow(2, depth);
+        int lonStart = (int) Math.round(Math.floor((ullon - MapServer.ROOT_ULLON) / (lonDPP * MapServer.TILE_SIZE)));
+        int lonEnd = (int) Math.round(Math.floor((lrlon - MapServer.ROOT_ULLON) / (lonDPP * MapServer.TILE_SIZE)));
+        int latStart = (int) Math.round(Math.floor((MapServer.ROOT_ULLAT - ullat) / (latDPP * MapServer.TILE_SIZE)));
+        int latEnd = (int) Math.round(Math.floor((MapServer.ROOT_ULLAT - lrlat) / (latDPP * MapServer.TILE_SIZE)));
+
+        xStart = Math.max(lonStart, 0);
+        xEnd = lonEnd > Math.pow(2, depth) - 1 ? (int) Math.pow(2, depth) - 1 : lonEnd;
+        yStart = Math.max(latStart, 0);
+        yEnd = latEnd > Math.pow(2, depth) - 1 ? (int) Math.pow(2, depth) - 1 : latEnd;
+
+        // Finally, we should return the results for the front end.
         Map<String, Object> results = new HashMap<>();
-        System.out.println("Since you haven't implemented getMapRaster, nothing is displayed in "
-                           + "your browser.");
+
+        // 1. "render_grid" : String[][], the files to display.
+        String render_grid[][] = new String[yEnd - yStart + 1][xEnd - xStart + 1];
+        for (int i = yStart; i <= yEnd; i++) {
+            for (int j = xStart; j <= xEnd; j++) {
+                render_grid[i - yStart][j - xStart] = "d" + depth + "_x" + j + "_y" + i + ".png";
+            }
+        }
+        results.put("render_grid", render_grid);
+
+        // 2. "raster_ul_lon" : Number, the bounding upper left longitude of the rastered image.
+        double raster_ul_lon = MapServer.ROOT_ULLON + xStart * lonDPP * MapServer.TILE_SIZE;
+        results.put("raster_ul_lon", raster_ul_lon);
+
+        // 3. "raster_ul_lat" : Number, the bounding upper left latitude of the rastered image.
+        double raster_ul_lat = MapServer.ROOT_ULLAT - yStart * latDPP * MapServer.TILE_SIZE;
+        results.put("raster_ul_lat", raster_ul_lat);
+
+        // 4. "raster_lr_lon" : Number, the bounding lower right longitude of the rastered image.
+        double raster_lr_lon = MapServer.ROOT_ULLON + (xEnd + 1) * lonDPP * MapServer.TILE_SIZE;
+        results.put("raster_lr_lon", raster_lr_lon);
+
+        // 5. "raster_lr_lat" : Number, the bounding lower right latitude of the rastered image.
+        double raster_lr_lat = MapServer.ROOT_ULLAT - (yEnd + 1) * latDPP * MapServer.TILE_SIZE;
+        results.put("raster_lr_lat", raster_lr_lat);
+
+        // 6. "depth" : Number, the depth of the nodes of the rastered image
+        results.put("depth", depth);
+
+        // 7. "query_success" : Boolean, whether the query was able to successfully complete; don't forget to set this to true on success!
+        results.put("query_success", true);
+
         return results;
     }
 
