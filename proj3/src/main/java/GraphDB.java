@@ -62,7 +62,7 @@ public class GraphDB {
             nodes = new HashMap<>();
 
             GraphBuildingHandler gbh = new GraphBuildingHandler(this);
-            saxParser.parse(inputStream, gbh);
+            //saxParser.parse(inputStream, gbh);
         } catch (ParserConfigurationException | SAXException | IOException e) {
             e.printStackTrace();
         }

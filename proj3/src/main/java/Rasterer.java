@@ -66,7 +66,7 @@ public class Rasterer {
 
         // Then, we should find the depth of the grid that best matches the query box.
         int depth = 0;
-        while ((LonDPP < ROOT_LONDPP / Math.pow(2, depth) || LatDPP < ROOT_LATDPP / Math.pow(2, depth)) && depth < 7) {
+        while ((LonDPP < ROOT_LONDPP / Math.pow(2, depth) && LatDPP < ROOT_LATDPP / Math.pow(2, depth)) && depth < 7) {
             depth++;
         }
 
