@@ -40,6 +40,7 @@ public class GraphBuildingHandler extends DefaultHandler {
     private String activeState = "";
     private final GraphDB g;
     LinkedList<Long> wayNodes = new LinkedList<>();
+    private Long lastNode = null;
 
     /**
      * Create a new GraphBuildingHandler.
@@ -47,6 +48,21 @@ public class GraphBuildingHandler extends DefaultHandler {
      */
     public GraphBuildingHandler(GraphDB g) {
         this.g = g;
+    }
+
+    private void removeEdgeBetweenNodes(GraphDB.Node node, Long connectedNodeId) {
+        node.edges.removeIf(edge -> edge.to == connectedNodeId);
+    }
+
+    private void disconnectDisallowedRoads() {
+        for (int i = 0; i < wayNodes.size() - 1; i++) {
+            Long currentNodeId = wayNodes.get(i);
+            GraphDB.Node currentNode = g.nodes.get(currentNodeId);
+            Long nextNodeId = wayNodes.get(i + 1);
+            GraphDB.Node nextNode = g.nodes.get(nextNodeId);
+            removeEdgeBetweenNodes(currentNode, nextNodeId);
+            removeEdgeBetweenNodes(nextNode, currentNodeId);
+        }
     }
 
     /**
@@ -72,6 +88,7 @@ public class GraphBuildingHandler extends DefaultHandler {
                     Double.parseDouble(attributes.getValue("lon")),
                     Double.parseDouble(attributes.getValue("lat")));
             g.addNode(Long.parseLong(attributes.getValue("id")),n);
+            lastNode = Long.parseLong(attributes.getValue("id"));
         } else if (qName.equals("way")) {
             activeState = "way";
         } else if (activeState.equals("way") && qName.equals("nd")) {
@@ -87,18 +104,11 @@ public class GraphBuildingHandler extends DefaultHandler {
             String k = attributes.getValue("k");
             String v = attributes.getValue("v");
             if (k.equals("maxspeed")) {
-                int maxSpeed = Integer.parseInt(v.replaceAll("\\D+", ""));
-                for (Long id : wayNodes) {
-                    if (id != wayNodes.size() - 1) {
-                        g.nodes.get(id).edges.get(g.nodes.get(id).edges.size() - 1).maxSpeed = maxSpeed;
-                        long destination = g.nodes.get(id).edges.get(g.nodes.get(id).edges.size() - 1).to;
-                        g.nodes.get(destination).edges.get(g.nodes.get(destination).edges.size() - 1).maxSpeed = maxSpeed;
-                    }
-                }
+
             } else if (k.equals("highway")) {
-                //System.out.println("Highway type: " + v);
-                /* TODO Figure out whether this way and its connections are valid. */
-                /* Hint: Setting a "flag" is good enough! */
+                if (!ALLOWED_HIGHWAY_TYPES.contains(v)) {
+                    disconnectDisallowedRoads();
+                }
             } else if (k.equals("name")) {
                 //System.out.println("Way Name: " + v);
             }
@@ -110,6 +120,7 @@ public class GraphBuildingHandler extends DefaultHandler {
             node this tag belongs to. Remember XML is parsed top-to-bottom, so probably it's the
             last node that you looked at (check the first if-case). */
 //            System.out.println("Node's name: " + attributes.getValue("v"));
+            g.nodes.get(lastNode).name = attributes.getValue("v");
         }
     }
 
@@ -127,10 +138,6 @@ public class GraphBuildingHandler extends DefaultHandler {
     @Override
     public void endElement(String uri, String localName, String qName) throws SAXException {
         if (qName.equals("way")) {
-            /* We are done looking at a way. (We finished looking at the nodes, speeds, etc...)*/
-            /* Hint1: If you have stored the possible connections for this way, here's your
-            chance to actually connect the nodes together if the way is valid. */
-//            System.out.println("Finishing a way...");
             wayNodes.clear();
         }
     }

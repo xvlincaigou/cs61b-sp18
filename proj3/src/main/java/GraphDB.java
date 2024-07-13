@@ -21,11 +21,13 @@ import java.util.stream.Collectors;
  */
 public class GraphDB {
     public static class Node {
+        public String name;
         public double lon;
         public double lat;
         public ArrayList<Edge> edges;
 
         public Node(double lon, double lat) {
+            this.name = "";
             this.lon = lon;
             this.lat = lat;
             this.edges = new ArrayList<>();
@@ -34,9 +36,10 @@ public class GraphDB {
 
     public static class Edge {
         public long to;
-        public int maxSpeed;
+        public String type;
         public Edge(long to) {
             this.to = to;
+            this.type = "";
         }
     }
 
