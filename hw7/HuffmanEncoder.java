@@ -11,17 +11,6 @@ public class HuffmanEncoder {
         return frequencyTable;
     }
 
-    private static BitSequence charToBitSequence(char symbol) {
-        BitSequence bitSequence = new BitSequence();
-        // 只遍历char的低8位
-        for (int i = 7; i >= 0; i--) {
-            // 检查第i位是否为1
-            int bit = (symbol >> i) & 1;
-            bitSequence = bitSequence.appended(bit);
-        }
-        return bitSequence;
-    }
-
     public static void main(String[] args) {
         // Read the file
         char[] symbols = FileUtils.readFile(args[0]);
@@ -38,9 +27,7 @@ public class HuffmanEncoder {
         // Encode the characters
         List<BitSequence> bitSequences = new ArrayList<>();
         for (char symbol : symbols) {
-            Match match = trie.longestPrefixMatch(charToBitSequence(symbol));
-            BitSequence bitSequence = lookupTable.get(match.getSymbol());
-            bitSequences.add(bitSequence);
+            bitSequences.add(lookupTable.get(symbol));
         }
         // Assemble all BitSequences into one large BitSequence
         BitSequence assembledSequence = BitSequence.assemble(bitSequences);
