@@ -1,4 +1,3 @@
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -14,8 +13,8 @@ public class HuffmanEncoder {
 
     private static BitSequence charToBitSequence(char symbol) {
         BitSequence bitSequence = new BitSequence();
-        // 遍历char的每一位
-        for (int i = 15; i >= 0; i--) {
+        // 只遍历char的低8位
+        for (int i = 7; i >= 0; i--) {
             // 检查第i位是否为1
             int bit = (symbol >> i) & 1;
             bitSequence = bitSequence.appended(bit);
