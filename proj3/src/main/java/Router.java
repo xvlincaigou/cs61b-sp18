@@ -1,5 +1,4 @@
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -12,6 +11,19 @@ import java.util.regex.Pattern;
  * down to the priority you use to order your vertices.
  */
 public class Router {
+    private static Long findClosestNode(GraphDB g, double lon, double lat) {
+        Long closestNode = null;
+        double closestDist = Double.MAX_VALUE;
+        for (long node : g.vertices()) {
+            double dist = GraphDB.distance(g.nodes.get(node).lon, g.nodes.get(node).lat, lon, lat);
+            if (dist < closestDist) {
+                closestDist = dist;
+                closestNode = node;
+            }
+        }
+        return closestNode;
+    }
+
     /**
      * Return a List of longs representing the shortest path from the node
      * closest to a start location and the node closest to the destination
@@ -25,7 +37,46 @@ public class Router {
      */
     public static List<Long> shortestPath(GraphDB g, double stlon, double stlat,
                                           double destlon, double destlat) {
-        return null; // FIXME
+        Long startNode = findClosestNode(g, stlon, stlat);
+        Long endNode = findClosestNode(g, destlon, destlat);
+        HashMap<Long, Double> distToStart = new HashMap<>();
+        HashMap<Long, Double> distToDest = new HashMap<>();
+        HashMap<Long, Long> nodeTo = new HashMap<>();
+        /////////////////////////////////////////////////////////////////////////////
+        PriorityQueue<Long> fringe = new PriorityQueue<>(
+                Comparator.comparingDouble(v -> distToStart.get(v) + distToDest.get(v))
+        );
+        /////////////////////////////////////////////////////////////////////////////
+        distToStart.put(startNode, GraphDB.distance(g.lon(startNode), g.lat(startNode), stlon, stlat));
+        distToDest.put(startNode, GraphDB.distance(g.lon(startNode), g.lat(startNode), destlon, destlat));
+        fringe.add(startNode);
+        while (!fringe.isEmpty()) {
+            Long v = fringe.poll();
+            if (v.equals(endNode)) {
+                break;
+            }
+            for (long w: g.adjacent(v)) {
+                double newDistToStart = distToStart.get(v) + g.distance(v, w);
+                if (!distToStart.containsKey(w) || newDistToStart < distToStart.get(w)) {
+                    distToStart.put(w, newDistToStart);
+                    nodeTo.put(w, v);
+                    if (distToDest.containsKey(w)) {
+                        fringe.remove(w);
+                    } else {
+                        distToDest.put(w, g.distance(w, endNode));
+                    }
+                    fringe.add(w);
+                }
+            }
+        }
+        Long currentNode = endNode;
+        LinkedList<Long> path = new LinkedList<>();
+        while (nodeTo.containsKey(currentNode)) {
+            path.addFirst(currentNode);
+            currentNode = nodeTo.get(currentNode);
+        }
+        path.addFirst(currentNode);
+        return path;
     }
 
     /**
