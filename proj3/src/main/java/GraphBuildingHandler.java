@@ -41,6 +41,7 @@ public class GraphBuildingHandler extends DefaultHandler {
     private final GraphDB g;
     LinkedList<Long> wayNodes = new LinkedList<>();
     private Long lastNode = null;
+    private Boolean isValidWay = false;
 
     /**
      * Create a new GraphBuildingHandler.
@@ -48,21 +49,6 @@ public class GraphBuildingHandler extends DefaultHandler {
      */
     public GraphBuildingHandler(GraphDB g) {
         this.g = g;
-    }
-
-    private void removeEdgeBetweenNodes(GraphDB.Node node, Long connectedNodeId) {
-        node.edges.removeIf(edge -> edge.to == connectedNodeId);
-    }
-
-    private void disconnectDisallowedRoads() {
-        for (int i = 0; i < wayNodes.size() - 1; i++) {
-            Long currentNodeId = wayNodes.get(i);
-            GraphDB.Node currentNode = g.nodes.get(currentNodeId);
-            Long nextNodeId = wayNodes.get(i + 1);
-            GraphDB.Node nextNode = g.nodes.get(nextNodeId);
-            removeEdgeBetweenNodes(currentNode, nextNodeId);
-            removeEdgeBetweenNodes(nextNode, currentNodeId);
-        }
     }
 
     /**
@@ -91,26 +77,21 @@ public class GraphBuildingHandler extends DefaultHandler {
             lastNode = Long.parseLong(attributes.getValue("id"));
         } else if (qName.equals("way")) {
             activeState = "way";
+            isValidWay = false;
         } else if (activeState.equals("way") && qName.equals("nd")) {
-            if (wayNodes.isEmpty()) {
-                wayNodes.addLast(Long.parseLong(attributes.getValue("ref")));
-            } else {
-                Long destination = Long.parseLong(attributes.getValue("ref"));
-                g.nodes.get(wayNodes.getLast()).edges.add(new GraphDB.Edge(destination));
-                g.nodes.get(destination).edges.add(new GraphDB.Edge(wayNodes.getLast()));
-                wayNodes.addLast(destination);
-            }
+            Long destination = Long.parseLong(attributes.getValue("ref"));
+            wayNodes.addLast(destination);
         } else if (activeState.equals("way") && qName.equals("tag")) {
             String k = attributes.getValue("k");
             String v = attributes.getValue("v");
             if (k.equals("maxspeed")) {
 
             } else if (k.equals("highway")) {
-                if (!ALLOWED_HIGHWAY_TYPES.contains(v)) {
-                    disconnectDisallowedRoads();
+                if (ALLOWED_HIGHWAY_TYPES.contains(v)) {
+                    isValidWay = true;
                 }
             } else if (k.equals("name")) {
-                //System.out.println("Way Name: " + v);
+
             }
         } else if (activeState.equals("node") && qName.equals("tag") && attributes.getValue("k")
                 .equals("name")) {
@@ -138,6 +119,13 @@ public class GraphBuildingHandler extends DefaultHandler {
     @Override
     public void endElement(String uri, String localName, String qName) throws SAXException {
         if (qName.equals("way")) {
+            if (isValidWay) {
+                for (int i = 0; i < wayNodes.size() - 1; i++) {
+                    g.nodes.get(wayNodes.get(i)).edges.add(new GraphDB.Edge(wayNodes.get(i + 1)));
+                    g.nodes.get(wayNodes.get(i + 1)).edges.add(new GraphDB.Edge(wayNodes.get(i)));
+                }
+                isValidWay = false;
+            }
             wayNodes.clear();
         }
     }

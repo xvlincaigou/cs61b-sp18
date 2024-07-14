@@ -57,7 +57,7 @@ public class GraphDB {
         try {
             File inputFile = new File(dbPath);
             FileInputStream inputStream = new FileInputStream(inputFile);
-            // GZIPInputStream stream = new GZIPInputStream(inputStream);
+            //GZIPInputStream stream = new GZIPInputStream(inputStream);
 
             SAXParserFactory factory = SAXParserFactory.newInstance();
             SAXParser saxParser = factory.newSAXParser();
@@ -65,7 +65,7 @@ public class GraphDB {
             nodes = new HashMap<>();
 
             GraphBuildingHandler gbh = new GraphBuildingHandler(this);
-            //saxParser.parse(inputStream, gbh);
+            saxParser.parse(inputStream, gbh);
         } catch (ParserConfigurationException | SAXException | IOException e) {
             e.printStackTrace();
         }
@@ -173,7 +173,16 @@ public class GraphDB {
      * @return The id of the node in the graph closest to the target.
      */
     long closest(double lon, double lat) {
-        return 0;
+        long closest = -1;
+        double minDistance = Double.MAX_VALUE;
+        for (long v : vertices()) {
+            double distance = distance(lon(v), lat(v), lon, lat);
+            if (distance < minDistance) {
+                minDistance = distance;
+                closest = v;
+            }
+        }
+        return closest;
     }
 
     /**
@@ -182,7 +191,7 @@ public class GraphDB {
      * @return The longitude of the vertex.
      */
     double lon(long v) {
-        return 0;
+        return nodes.get(v).lon;
     }
 
     /**
@@ -191,6 +200,6 @@ public class GraphDB {
      * @return The latitude of the vertex.
      */
     double lat(long v) {
-        return 0;
+        return nodes.get(v).lat;
     }
 }
