@@ -1,3 +1,5 @@
+import java.util.Arrays;
+
 /**
  * Class for doing Radix sort
  *
@@ -16,19 +18,37 @@ public class RadixSort {
      * @return String[] the sorted array
      */
     public static String[] sort(String[] asciis) {
-        // TODO: Implement LSD Sort
-        return null;
+        int maxLen = 0;
+        for (String s : asciis)
+            maxLen = Math.max(maxLen, s.length());
+        String[] sorted = Arrays.copyOf(asciis, asciis.length);
+        for (int i = maxLen - 1; i >= 0; i--)
+            sortHelperLSD(sorted, i);
+        return sorted;
+    }
+
+    private static int charAtOrMaxChar(String s, int index) {
+        if (index < s.length())
+            return s.charAt(index);
+        return 256;
     }
 
     /**
      * LSD helper method that performs a destructive counting sort the array of
      * Strings based off characters at a specific index.
-     * @param asciis Input array of Strings
+     * @param sorted Input array of Strings
      * @param index The position to sort the Strings on.
      */
-    private static void sortHelperLSD(String[] asciis, int index) {
-        // Optional LSD helper method for required LSD radix sort
-        return;
+    private static void sortHelperLSD(String[] sorted, int index) {
+        int[] counts = new int[257];
+        for (String s : sorted)
+            counts[charAtOrMaxChar(s, index)]++;
+        for (int i = 1; i < counts.length; i++)
+            counts[i] += counts[i - 1];
+        String[] aux = new String[sorted.length];
+        for (String s : sorted)
+            aux[counts[charAtOrMaxChar(s, index)]++] = s;
+        System.arraycopy(aux, 0, sorted, 0, sorted.length);
     }
 
     /**
