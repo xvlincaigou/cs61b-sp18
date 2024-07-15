@@ -2,11 +2,6 @@ import edu.princeton.cs.introcs.In;
 
 import java.util.*;
 
-import java.util.stream.Collectors;
-
-import org.junit.Test;
-import static org.junit.Assert.*;
-
 public class Boggle {
 
     private static class State {
@@ -119,11 +114,14 @@ public class Boggle {
         }
 
         // 用于存储结果
-        PriorityQueue<String> result = new PriorityQueue<>((a, b) -> {
-            if (a.length() != b.length()) {
-                return b.length() - a.length();
-            } else {
-                return a.compareTo(b);
+        TreeSet<String> result = new TreeSet<>(new Comparator<String>() {
+            @Override
+            public int compare(String a, String b) {
+                if (a.length() != b.length()) {
+                    return b.length() - a.length();
+                } else {
+                    return a.compareTo(b);
+                }
             }
         });
 
@@ -156,9 +154,72 @@ public class Boggle {
             if (result.isEmpty()) {
                 break;
             }
-            res.add(result.poll());
+            res.add(result.pollFirst());
         }
 
         return res;
     }
+
+    public static void main(String[] args) {
+
+        // read Boggle board of unknown dimensions
+        In in = new In("smallBoard.txt");
+        List<String> lines = new ArrayList<>();
+        while (!in.isEmpty()) {
+            lines.add(in.readLine());
+        }
+        int numRows = lines.size();
+        int numCols = lines.get(0).length();
+        char[][] board1 = new char[numRows][numCols];
+        for (int i = 0; i < numRows; i++) {
+            if (lines.get(i).length() != numCols) {
+                throw new IllegalArgumentException("Board is not rectangular");
+            }
+            for (int j = 0; j < numCols; j++) {
+                board1[i][j] = lines.get(i).charAt(j);
+            }
+        }
+
+        System.out.println("Size of board: " + board1.length + " x " + board1[0].length);
+        long start1 = System.currentTimeMillis();
+        List<String> res1 = solve(7, "smallBoard.txt");
+        long end1 = System.currentTimeMillis();
+        long timeSpan1 = end1 - start1;
+        System.out.println(res1.toString());
+        System.out.println("time to solve the boggle: " + timeSpan1);
+        System.out.println();
+
+        in = new In("smallBoard2.txt");
+        List<String> _lines = new ArrayList<>();
+        while (!in.isEmpty()) {
+            _lines.add(in.readLine());
+        }
+        int _numRows = _lines.size();
+        int _numCols = _lines.get(0).length();
+        char[][] board2 = new char[_numRows][_numCols];
+        for (int i = 0; i < _numRows; i++) {
+            if (_lines.get(i).length() != _numCols) {
+                throw new IllegalArgumentException("Board is not rectangular");
+            }
+            for (int j = 0; j < _numCols; j++) {
+                board2[i][j] = _lines.get(i).charAt(j);
+            }
+        }
+
+        System.out.println("Size of board: " + board2.length + " x " + board2[0].length);
+        long start2 = System.currentTimeMillis();
+        List<String> res2 = solve(7, "smallBoard2.txt");
+        long end2 = System.currentTimeMillis();
+        System.out.println(res2.toString());
+        long timeSpan2 = end2 - start2;
+        System.out.println("time to solve the boggle: " + timeSpan2);
+        System.out.println();
+
+        int sizeRatio = (board1.length / board2.length) * (board1[0].length / board2[0].length);
+        System.out.println("board1 is about x" + sizeRatio + " larger(smaller) than board2");
+        System.out.println("Linearly extrapolating from the board2 runtime, "
+                + "we would expect a runtime of "
+                + timeSpan2 + " x " + sizeRatio + " = " + (timeSpan2 * sizeRatio));
+    }
+
 }
