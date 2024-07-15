@@ -1,9 +1,11 @@
 import edu.princeton.cs.introcs.In;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.PriorityQueue;
-import java.util.Stack;
+import java.util.*;
+
+import java.util.stream.Collectors;
+
+import org.junit.Test;
+import static org.junit.Assert.*;
 
 public class Boggle {
 
@@ -15,6 +17,19 @@ public class Boggle {
             public Coord(int x, int y) {
                 this.x = x;
                 this.y = y;
+            }
+
+            @Override
+            public boolean equals(Object obj) {
+                if (this == obj) return true;
+                if (obj == null || getClass() != obj.getClass()) return false;
+                Coord coord = (Coord) obj;
+                return x == coord.x && y == coord.y;
+            }
+
+            @Override
+            public int hashCode() {
+                return Objects.hash(x, y);
             }
         }
         Coord coord;
@@ -29,16 +44,24 @@ public class Boggle {
 
         public List<State> lawyableNeighbors(int m, int n) {
             int x = coord.x, y = coord.y;
-            return new ArrayList<>(List.of(new State[]{
-                    new State((x - 1) % n, (y - 1) % m),
-                    new State((x - 1) % n, y),
-                    new State((x - 1) % n, (y + 1) % m),
-                    new State(x, (y - 1) % m),
-                    new State(x, (y + 1) % m),
-                    new State((x + 1) % n, (y - 1) % m),
-                    new State((x + 1) % n, y),
-                    new State((x + 1) % n, (y + 1) % m)
-            })).stream().filter(o -> !previous.contains(o.coord)).toList();
+            List<State> neighbors = new ArrayList<>();
+            int[][] directions = {
+                    {-1, -1}, {-1, 0}, {-1, 1},
+                    {0, -1},           {0, 1},
+                    {1, -1}, {1, 0}, {1, 1}
+            };
+
+            for (int[] dir : directions) {
+                int newX = x + dir[0];
+                int newY = y + dir[1];
+                if (newX >= 0 && newX < n && newY >= 0 && newY < m) { // 确保新坐标在边界内
+                    if (!previous.contains(new Coord(newX, newY))) {
+                        neighbors.add(new State(newX, newY));
+                    }
+                }
+            }
+
+            return neighbors;
         }
     }
     
@@ -56,8 +79,16 @@ public class Boggle {
      *         have them in ascending alphabetical order.
      */
     public static List<String> solve(int k, String boardFilePath) {
+
+        if (k <= 0) {
+            throw new IllegalArgumentException("k should be positive");
+        }
+
         // 从文件中读取单词
         In in = new In(dictPath);
+        if (in.isEmpty()) {
+            throw new IllegalArgumentException("Dictionary file is empty");
+        }
         List<String> wordList = new ArrayList<>();
 
         while (!in.isEmpty()) {
@@ -79,6 +110,9 @@ public class Boggle {
         int numCols = lines.get(0).length();
         char[][] board = new char[numRows][numCols];
         for (int i = 0; i < numRows; i++) {
+            if (lines.get(i).length() != numCols) {
+                throw new IllegalArgumentException("Board is not rectangular");
+            }
             for (int j = 0; j < numCols; j++) {
                 board[i][j] = lines.get(i).charAt(j);
             }
@@ -95,7 +129,7 @@ public class Boggle {
 
         for (int i = 0; i < numRows; ++ i) {
             for (int j = 0; j < numCols; ++ j) {
-                State state = new State(i, j);
+                State state = new State(j, i);
                 state.prefix = String.valueOf(board[i][j]);
                 state.previous.add(state.coord);
                 Stack<State> stack = new Stack<>();
@@ -103,12 +137,13 @@ public class Boggle {
                 while (!stack.isEmpty()) {
                     State current = stack.pop();
                     if (trie.isValidPrefix(current.prefix)) {
-                        if (trie.isValidWord(current.prefix) && current.prefix.length() >= 3) {
+                        if (trie.isValidWord(current.prefix) && current.prefix.length() >= 3 && !result.contains(current.prefix)) {
                             result.add(current.prefix);
                         }
                         for (State neighbor : current.lawyableNeighbors(numRows, numCols)) {
-                            neighbor.prefix = current.prefix + board[neighbor.coord.x][neighbor.coord.y];
+                            neighbor.prefix = current.prefix + board[neighbor.coord.y][neighbor.coord.x];
                             neighbor.previous.addAll(current.previous);
+                            neighbor.previous.add(neighbor.coord);
                             stack.push(neighbor);
                         }
                     }
