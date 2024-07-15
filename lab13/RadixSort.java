@@ -27,10 +27,10 @@ public class RadixSort {
         return sorted;
     }
 
-    private static int charAtOrMaxChar(String s, int index) {
+    private static int charAtOrMinChar(String s, int index) {
         if (index < s.length())
             return s.charAt(index);
-        return 256;
+        return 0;
     }
 
     /**
@@ -40,14 +40,23 @@ public class RadixSort {
      * @param index The position to sort the Strings on.
      */
     private static void sortHelperLSD(String[] sorted, int index) {
+        // Optional LSD helper method for optional LSD radix sort
         int[] counts = new int[257];
         for (String s : sorted)
-            counts[charAtOrMaxChar(s, index)]++;
-        for (int i = 1; i < counts.length; i++)
-            counts[i] += counts[i - 1];
+            counts[charAtOrMinChar(s, index)]++;
+
+        int[] starts = new int[257];
+        int pos = 0;
+        for (int i = 0; i < counts.length; i++) {
+            starts[i] = pos;
+            pos += counts[i];
+        }
         String[] aux = new String[sorted.length];
-        for (String s : sorted)
-            aux[counts[charAtOrMaxChar(s, index)]++] = s;
+        for (String s : sorted) {
+            int i = starts[charAtOrMinChar(s, index)];
+            aux[i] = s;
+            starts[charAtOrMinChar(s, index)]++;
+        }
         System.arraycopy(aux, 0, sorted, 0, sorted.length);
     }
 
