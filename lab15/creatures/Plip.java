@@ -42,8 +42,8 @@ public class Plip extends Creature {
      *  that you get this exactly correct.
      */
     public Color color() {
-        g = 63;
-        return color(r, g, b);
+        g = (int) (96 * energy + 63);
+        return color(99, g, 76);
     }
 
     /** Do nothing with C, Plips are pacifists. */
@@ -55,11 +55,14 @@ public class Plip extends Creature {
      *  private static final variable. This is not required for this lab.
      */
     public void move() {
+        this.energy -= 0.15;
     }
 
 
     /** Plips gain 0.2 energy when staying due to photosynthesis. */
     public void stay() {
+        this.energy += 0.2;
+        this.energy = Math.min(this.energy, 2.0);
     }
 
     /** Plips and their offspring each get 50% of the energy, with none
@@ -67,7 +70,8 @@ public class Plip extends Creature {
      *  Plip.
      */
     public Plip replicate() {
-        return this;
+        this.energy /= 2;
+        return new Plip(this.energy);
     }
 
     /** Plips take exactly the following actions based on NEIGHBORS:
@@ -81,7 +85,26 @@ public class Plip extends Creature {
      *  for an example to follow.
      */
     public Action chooseAction(Map<Direction, Occupant> neighbors) {
+        List<Direction> emptyNeighbors = getNeighborsOfType(neighbors, "empty");
+        List<Direction> clorusNeighbors = getNeighborsOfType(neighbors, "clorus");
+        // List<Direction> plipNeighbors = getNeighborsOfType(neighbors, "plip");
+
+        if (emptyNeighbors.isEmpty()) {
+            return new Action(Action.ActionType.STAY);
+        } else if (this.energy >= 1.0) {
+            Direction repDir = HugLifeUtils.randomEntry(emptyNeighbors);
+            return new Action(Action.ActionType.REPLICATE, repDir);
+        } else if (!clorusNeighbors.isEmpty()) {
+            if (HugLifeUtils.random() < 0.5) {
+                Direction moveDir = HugLifeUtils.randomEntry(emptyNeighbors);
+                return new Action(Action.ActionType.MOVE, moveDir);
+            }
+        }
         return new Action(Action.ActionType.STAY);
     }
 
+    @Override
+    public String name() {
+        return "plip";
+    }
 }
