@@ -42,6 +42,7 @@ public class GraphBuildingHandler extends DefaultHandler {
     LinkedList<Long> wayNodes = new LinkedList<>();
     private Long lastNode = null;
     private Boolean isValidWay = false;
+    private String wayName = "";
 
     /**
      * Create a new GraphBuildingHandler.
@@ -91,7 +92,7 @@ public class GraphBuildingHandler extends DefaultHandler {
                     isValidWay = true;
                 }
             } else if (k.equals("name")) {
-
+                wayName = v;
             }
         } else if (activeState.equals("node") && qName.equals("tag") && attributes.getValue("k")
                 .equals("name")) {
@@ -121,10 +122,11 @@ public class GraphBuildingHandler extends DefaultHandler {
         if (qName.equals("way")) {
             if (isValidWay) {
                 for (int i = 0; i < wayNodes.size() - 1; i++) {
-                    g.nodes.get(wayNodes.get(i)).edges.add(new GraphDB.Edge(wayNodes.get(i + 1)));
-                    g.nodes.get(wayNodes.get(i + 1)).edges.add(new GraphDB.Edge(wayNodes.get(i)));
+                    g.nodes.get(wayNodes.get(i)).edges.add(new GraphDB.Edge(wayNodes.get(i + 1), wayName));
+                    g.nodes.get(wayNodes.get(i + 1)).edges.add(new GraphDB.Edge(wayNodes.get(i), wayName));
                 }
                 isValidWay = false;
+                wayName = "";
             }
             wayNodes.clear();
         }

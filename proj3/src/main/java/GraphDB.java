@@ -37,9 +37,11 @@ public class GraphDB {
     public static class Edge {
         public long to;
         public String type;
-        public Edge(long to) {
+        public String name;
+        public Edge(long to, String name) {
             this.to = to;
             this.type = "";
+            this.name = name;
         }
     }
 

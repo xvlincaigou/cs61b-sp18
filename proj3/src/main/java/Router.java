@@ -42,11 +42,9 @@ public class Router {
         HashMap<Long, Double> distToStart = new HashMap<>();
         HashMap<Long, Double> distToDest = new HashMap<>();
         HashMap<Long, Long> nodeTo = new HashMap<>();
-        /////////////////////////////////////////////////////////////////////////////
         PriorityQueue<Long> fringe = new PriorityQueue<>(
                 Comparator.comparingDouble(v -> distToStart.get(v) + distToDest.get(v))
         );
-        /////////////////////////////////////////////////////////////////////////////
         distToStart.put(startNode, GraphDB.distance(g.lon(startNode), g.lat(startNode), stlon, stlat));
         distToDest.put(startNode, GraphDB.distance(g.lon(startNode), g.lat(startNode), destlon, destlat));
         fringe.add(startNode);
@@ -76,8 +74,31 @@ public class Router {
             currentNode = nodeTo.get(currentNode);
         }
         path.addFirst(currentNode);
-        return path;
+        return new ArrayList<>(path);
     }
+
+    private static int findChangeWayIndex(GraphDB g, List<Long> route, int currNodeIndex, String prevWay) {
+        if (currNodeIndex == route.size() - 1)
+            return currNodeIndex;
+        int nextNodeIndex = currNodeIndex + 1;
+        long currNode = route.get(currNodeIndex), nextNode = route.get(nextNodeIndex);
+        // 得到edges里面的元素中to的值等于nextNode的元素
+        String currWay = g.nodes.get(currNode).edges.stream().filter(e -> e.to == nextNode).findFirst().get().name;
+        if (!currWay.equals(prevWay))
+            return currNodeIndex;
+        return findChangeWayIndex(g, route, nextNodeIndex, currWay);
+    }
+
+    private static double distanceBetweenNodes(GraphDB g, int index1, int index2, List<Long> route) {
+        if (index1 == index2)
+            return 0.0;
+        long node1 = route.get(index1), node2 = route.get(index1 + 1);
+        return g.distance(node1, node2) + distanceBetweenNodes(g, index1 + 1, index2, route);
+    }
+
+    private static final double cos15 = Math.cos(Math.toRadians(15));
+    private static final double cos30 = Math.cos(Math.toRadians(30));
+    private static final double cos100 = Math.cos(Math.toRadians(100));
 
     /**
      * Create the list of directions corresponding to a route on the graph.
@@ -88,7 +109,58 @@ public class Router {
      * route.
      */
     public static List<NavigationDirection> routeDirections(GraphDB g, List<Long> route) {
-        return null; // FIXME
+        // Initialize the directions list
+        LinkedList<NavigationDirection> directions = new LinkedList<>();
+
+        // If the route is empty or only has one node, return an empty list
+        if (route.size() < 2)
+            return directions;
+
+        // Initialize the variables
+        int prevNodeIndex = - 1, currNodeIndex = 0, changeWayIndex = 0;
+        String way = g.nodes.get(route.get(currNodeIndex)).edges.stream().filter(e -> e.to == route.get(1)).findFirst().get().name;
+
+        // Iterate through the route
+        while (currNodeIndex != route.size() - 1) {
+            // Find the index of the node where the way changes
+            changeWayIndex = findChangeWayIndex(g, route, currNodeIndex, way);
+            if (prevNodeIndex == -1) {
+                directions.add(new NavigationDirection(NavigationDirection.START, way, distanceBetweenNodes(g, currNodeIndex, changeWayIndex, route)));
+            } else {
+                long prevNode = route.get(prevNodeIndex), currNode = route.get(currNodeIndex), nextNode = route.get(changeWayIndex);
+                double prevBearing = GraphDB.bearing(g.lon(prevNode), g.lat(prevNode), g.lon(currNode), g.lat(currNode)), currBearing = GraphDB.bearing(g.lon(currNode), g.lat(currNode), g.lon(nextNode), g.lat(nextNode));
+                double cosBearingDiff = Math.cos(Math.toRadians(currBearing - prevBearing));
+                double distance = g.distance(currNode, nextNode);
+                if (cosBearingDiff >= cos15) {
+                    directions.add(new NavigationDirection(NavigationDirection.STRAIGHT, way, distance));
+                } else if (cosBearingDiff >= cos30) {
+                    if (Math.sin(Math.toRadians(currBearing - prevBearing)) > 0) {
+                        directions.add(new NavigationDirection(NavigationDirection.SLIGHT_LEFT, way, distance));
+                    } else {
+                        directions.add(new NavigationDirection(NavigationDirection.SLIGHT_RIGHT, way, distance));
+                    }
+                } else if (cosBearingDiff >= cos100) {
+                    if (Math.sin(Math.toRadians(currBearing - prevBearing)) > 0) {
+                        directions.add(new NavigationDirection(NavigationDirection.LEFT, way, distance));
+                    } else {
+                        directions.add(new NavigationDirection(NavigationDirection.RIGHT, way, distance));
+                    }
+                } else {
+                    if (Math.sin(Math.toRadians(currBearing - prevBearing)) > 0) {
+                        directions.add(new NavigationDirection(NavigationDirection.SHARP_LEFT, way, distance));
+                    } else {
+                        directions.add(new NavigationDirection(NavigationDirection.SHARP_RIGHT, way, distance));
+                    }
+                }
+            }
+            currNodeIndex = changeWayIndex;
+            prevNodeIndex = currNodeIndex - 1;
+            if (currNodeIndex == route.size() - 1)
+                break;
+            int finalCurrNodeIndex = currNodeIndex;
+            way = g.nodes.get(route.get(currNodeIndex)).edges.stream().filter(e -> e.to == route.get(finalCurrNodeIndex + 1)).findFirst().get().name;
+        }
+        return directions;
     }
 
 
@@ -143,6 +215,12 @@ public class Router {
             this.direction = STRAIGHT;
             this.way = UNKNOWN_ROAD;
             this.distance = 0.0;
+        }
+
+        public NavigationDirection(int direction, String way, double distance) {
+            this.direction = direction;
+            this.way = way;
+            this.distance = distance;
         }
 
         public String toString() {
