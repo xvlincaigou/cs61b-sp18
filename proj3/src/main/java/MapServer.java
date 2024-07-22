@@ -81,7 +81,7 @@ public class MapServer {
     private static GraphDB graph;
     private static List<Long> route = new LinkedList<>();
     /* Define any static variables here. Do not define any instance variables of MapServer. */
-
+    private static Trie trie;
 
     /**
      * Place any initialization statements that will be run before the server main loop here.
@@ -91,6 +91,10 @@ public class MapServer {
     public static void initialize() {
         graph = new GraphDB(OSM_DB_PATH);
         rasterer = new Rasterer();
+        trie = new Trie();
+        for (long index: graph.nodes.keySet()) {
+            trie.insert(index, graph.nodes.get(index));
+        }
     }
 
     public static void main(String[] args) {
@@ -285,7 +289,12 @@ public class MapServer {
      * cleaned <code>prefix</code>.
      */
     public static List<String> getLocationsByPrefix(String prefix) {
-        return new LinkedList<>();
+        List<Long> ids = trie.completeWords(prefix);
+        List<String> locations = new LinkedList<>();
+        for (long id: ids) {
+            locations.add(graph.nodes.get(id).name);
+        }
+        return locations;
     }
 
     /**
@@ -301,7 +310,17 @@ public class MapServer {
      * "id" : Number, The id of the node. <br>
      */
     public static List<Map<String, Object>> getLocations(String locationName) {
-        return new LinkedList<>();
+        List<Long> ids = trie.completeWords(locationName);
+        List<Map<String, Object>> locations = new LinkedList<>();
+        for (long id: ids) {
+            Map<String, Object> location = new HashMap<>();
+            location.put("lat", graph.nodes.get(id).lat);
+            location.put("lon", graph.nodes.get(id).lon);
+            location.put("name", graph.nodes.get(id).name);
+            location.put("id", id);
+            locations.add(location);
+        }
+        return locations;
     }
 
     /**
