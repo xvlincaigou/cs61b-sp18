@@ -128,25 +128,28 @@ public class Router {
                 directions.add(new NavigationDirection(NavigationDirection.START, way, distanceBetweenNodes(g, currNodeIndex, changeWayIndex, route)));
             } else {
                 long prevNode = route.get(prevNodeIndex), currNode = route.get(currNodeIndex), nextNode = route.get(changeWayIndex);
-                double prevBearing = GraphDB.bearing(g.lon(prevNode), g.lat(prevNode), g.lon(currNode), g.lat(currNode)), currBearing = GraphDB.bearing(g.lon(currNode), g.lat(currNode), g.lon(nextNode), g.lat(nextNode));
+                double prevBearing = GraphDB.bearing(g.lon(route.get(currNodeIndex - 1)), g.lat(route.get(currNodeIndex - 1)), g.lon(currNode), g.lat(currNode)), currBearing = GraphDB.bearing(g.lon(currNode), g.lat(currNode), g.lon(route.get(currNodeIndex + 1)), g.lat(route.get(currNodeIndex + 1)));
                 double cosBearingDiff = Math.cos(Math.toRadians(currBearing - prevBearing));
-                double distance = g.distance(currNode, nextNode);
+                double distance = 0;
+                for (int i = currNodeIndex; i < changeWayIndex; i++) {
+                    distance += g.distance(route.get(i), route.get(i + 1));
+                }
                 if (cosBearingDiff >= cos15) {
                     directions.add(new NavigationDirection(NavigationDirection.STRAIGHT, way, distance));
                 } else if (cosBearingDiff >= cos30) {
-                    if (Math.sin(Math.toRadians(currBearing - prevBearing)) > 0) {
+                    if (Math.sin(Math.toRadians(currBearing - prevBearing)) < 0) {
                         directions.add(new NavigationDirection(NavigationDirection.SLIGHT_LEFT, way, distance));
                     } else {
                         directions.add(new NavigationDirection(NavigationDirection.SLIGHT_RIGHT, way, distance));
                     }
                 } else if (cosBearingDiff >= cos100) {
-                    if (Math.sin(Math.toRadians(currBearing - prevBearing)) > 0) {
+                    if (Math.sin(Math.toRadians(currBearing - prevBearing)) < 0) {
                         directions.add(new NavigationDirection(NavigationDirection.LEFT, way, distance));
                     } else {
                         directions.add(new NavigationDirection(NavigationDirection.RIGHT, way, distance));
                     }
                 } else {
-                    if (Math.sin(Math.toRadians(currBearing - prevBearing)) > 0) {
+                    if (Math.sin(Math.toRadians(currBearing - prevBearing)) < 0) {
                         directions.add(new NavigationDirection(NavigationDirection.SHARP_LEFT, way, distance));
                     } else {
                         directions.add(new NavigationDirection(NavigationDirection.SHARP_RIGHT, way, distance));

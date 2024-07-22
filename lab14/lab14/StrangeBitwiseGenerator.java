@@ -19,7 +19,8 @@ public class StrangeBitwiseGenerator implements Generator{
     public double next() {
         this.state += 1;
         //int weirdState = (state & (state >> 3)) % period;
-        int weirdState = state & (state >> 3) & (state >> 8) % period;
+        //int weirdState = state & (state >> 3) & (state >> 8) % period;
+        int weirdState = state & (state >> 7) % period;
         return normalize(weirdState);
     }
 }

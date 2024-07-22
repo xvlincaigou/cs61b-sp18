@@ -45,9 +45,14 @@ public class Main {
 		GeneratorAudioVisualizer gav = new GeneratorAudioVisualizer(generator);
 		gav.drawAndPlay(4096, 1000000);
 		 */
+		/*
 		Generator generator = new StrangeBitwiseGenerator(512);
 		GeneratorAudioVisualizer gav = new GeneratorAudioVisualizer(generator);
 		gav.drawAndPlay(4096, 1000000);
+		 */
+		Generator generator = new StrangeBitwiseGenerator(1024);
+		GeneratorAudioVisualizer gav = new GeneratorAudioVisualizer(generator);
+		gav.drawAndPlay(128000, 1000000);
 	}
 
 } 
