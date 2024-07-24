@@ -281,6 +281,15 @@ public class MapServer {
         route = new LinkedList<Long>();
     }
 
+    private static String getCleanedName(String originalName) {
+        StringBuilder cleanedName = new StringBuilder();
+        for (char c : originalName.toCharArray()) {
+            if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == ' ') {
+                cleanedName.append(c);
+            }
+        }
+        return cleanedName.toString().toLowerCase();
+    }
     /**
      * In linear time, collect all the names of OSM locations that prefix-match the query string.
      * @param prefix Prefix string to be searched for. Could be any case, with our without
@@ -289,7 +298,7 @@ public class MapServer {
      * cleaned <code>prefix</code>.
      */
     public static List<String> getLocationsByPrefix(String prefix) {
-        List<Long> ids = trie.completeWords(prefix);
+        List<Long> ids = trie.completeWords(getCleanedName(prefix));
         List<String> locations = new LinkedList<>();
         for (long id: ids) {
             locations.add(graph.nodes.get(id).name);
@@ -310,7 +319,7 @@ public class MapServer {
      * "id" : Number, The id of the node. <br>
      */
     public static List<Map<String, Object>> getLocations(String locationName) {
-        List<Long> ids = trie.completeWords(locationName);
+        List<Long> ids = trie.completeWordsPrecisely(getCleanedName(locationName));
         List<Map<String, Object>> locations = new LinkedList<>();
         for (long id: ids) {
             Map<String, Object> location = new HashMap<>();
