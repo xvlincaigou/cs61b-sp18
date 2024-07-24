@@ -71,7 +71,7 @@ public class Game {
     private static long convertSubstringToNumber(String input) {
         int sIndex = input.indexOf('s');
         String numberPart = input.substring(1, sIndex);
-        return Integer.parseInt(numberPart);
+        return Long.parseLong(numberPart);
     }
 
     public Game() {
