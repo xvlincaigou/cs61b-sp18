@@ -67,7 +67,7 @@ public class Game {
         }
         return count;
     }
-    
+
     private static long convertSubstringToNumber(String input) {
         int sIndex = input.indexOf('s');
         String numberPart = input.substring(1, sIndex);
@@ -75,7 +75,7 @@ public class Game {
     }
 
     public Game() {
-        ter.initialize(WIDTH, HEIGHT);
+        //ter.initialize(WIDTH, HEIGHT);
         wallNumbers = 0;
         tiles = new TETile[HEIGHT][WIDTH];
     }
@@ -123,7 +123,7 @@ public class Game {
                 }
             }
         }
-        ter.renderFrame(tiles);
+        //ter.renderFrame(tiles);
 
         TETile[][] finalWorldFrame = this.tiles;
         return finalWorldFrame;
