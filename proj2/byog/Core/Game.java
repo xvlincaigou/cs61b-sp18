@@ -4,10 +4,7 @@ import byog.TileEngine.TERenderer;
 import byog.TileEngine.TETile;
 import byog.TileEngine.Tileset;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-
+import java.util.*;
 
 public class Game {
     TERenderer ter = new TERenderer();
@@ -15,8 +12,9 @@ public class Game {
     public static final int WIDTH = 50;
     public static final int HEIGHT = 50;
     private Random RANDOM;
-    private int wallNumbers;
-    private TETile[][] tiles;
+    private static final int wallNumbersMax = 500;
+    private final TETile[][] tiles;
+    private final UnionFind unionFind;
 
     private static class Position {
         int x,y;
@@ -24,8 +22,71 @@ public class Game {
             this.x = x;
             this.y = y;
         }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            Position position = (Position) o;
+
+            return x == position.x && y == position.y;
+        }
+
+        @Override
+        public int hashCode() {
+            return 50 * x + y;
+        }
     }
-    private Position getNotWallPosRandomly() {
+
+    private static class UnionFind {
+        private final Map<Position, Position> parent;
+        private final Map<Position, Integer> rank;
+        public int maxRank;
+
+        public UnionFind() {
+            this.parent = new HashMap<>();
+            this.rank = new HashMap<>();
+        }
+
+        public void makeSet(Position p) {
+            parent.put(p, p);
+            rank.put(p, 1);
+        }
+
+        public Position find(Position p) {
+            if (!parent.get(p).equals(p)) {
+                parent.put(p, find(parent.get(p)));
+            }
+            return parent.get(p);
+        }
+
+        public int getRank(Position p) {
+            return rank.get(find(p));
+        }
+
+        public void union(Position p1, Position p2) {
+            Position root1 = find(p1);
+            Position root2 = find(p2);
+
+            if (!root1.equals(root2)) {
+                int rank1 = rank.get(root1);
+                int rank2 = rank.get(root2);
+
+                if (rank1 >= rank2) {
+                    parent.put(root2, root1);
+                    rank.put(root1, rank1 + rank2);
+                } else {
+                    parent.put(root1, root2);
+                    rank.put(root2, rank1 + rank2);
+                }
+
+                maxRank = Math.max(rank1 + rank2, maxRank);
+            }
+        }
+    }
+
+    private Position getStartWall() {
         Position pos = new Position(RANDOM.nextInt(WIDTH), RANDOM.nextInt(HEIGHT));
         while (tiles[pos.y][pos.x] == Tileset.WALL) {
             pos = new Position(RANDOM.nextInt(WIDTH), RANDOM.nextInt(HEIGHT));
@@ -35,37 +96,38 @@ public class Game {
 
     private Position getNotWallLegalPosRandomlyByP(Position p) {
         List<Position> potentialPositions = new ArrayList<>();
-        // Check positions around p: above, below, left, right
         int[][] directions = {{0, 1}, {0, -1}, {-1, 0}, {1, 0}};
         for (int[] d : directions) {
             int newX = p.x + d[0];
             int newY = p.y + d[1];
             // Ensure the new position is within bounds, not a wall, and surrounded by no more than 2 walls
-            if (newX >= 0 && newX < WIDTH && newY >= 0 && newY < HEIGHT && tiles[newY][newX] != Tileset.WALL && countSurroundingWalls(newX, newY) <= 2) {
-                if (!(newX == p.x && p.x == 0) && !(newY == p.y && p.y == 0) && !(newX == p.x && p.x == WIDTH - 1) && !(newY == p.y && p.y == HEIGHT - 1)) {
+            if (newX >= 0 && newX < WIDTH && newY >= 0 && newY < HEIGHT &&
+                    tiles[newY][newX] != Tileset.WALL &&
+                    getSurroundingPositions(newX, newY, Tileset.WALL).size() < 2 &&
+                    !(newX == p.x && p.x == 0) && !(newY == p.y && p.y == 0) &&
+                    !(newX == p.x && p.x == WIDTH - 1) && !(newY == p.y && p.y == HEIGHT - 1)
+            ) {
                     potentialPositions.add(new Position(newX, newY));
-                }
             }
         }
-        // If there are valid positions, return one at random
         if (!potentialPositions.isEmpty()) {
             return potentialPositions.get(RANDOM.nextInt(potentialPositions.size()));
         }
-        // If no valid position is found, return null
         return null;
     }
 
-    private int countSurroundingWalls(int x, int y) {
-        int count = 0;
-        int[][] directions = {{0, 1}, {0, -1}, {-1, 0}, {1, 0}, {-1, -1}, {-1, 1}, {1, -1}, {1, 1}};
+    private ArrayList<Position> getSurroundingPositions(int x, int y, TETile tile) {
+        ArrayList<Position> surroundingFloors = new ArrayList<>();
+        int[][] directions = {{0, 1}, {0, -1}, {-1, 0}, {1, 0}};
         for (int[] d : directions) {
             int newX = x + d[0];
             int newY = y + d[1];
-            if (newX >= 0 && newX < WIDTH && newY >= 0 && newY < HEIGHT && tiles[newY][newX] == Tileset.WALL) {
-                count++;
+            if (newX >= 0 && newX < WIDTH && newY >= 0 && newY < HEIGHT &&
+                    Objects.equals(tiles[newY][newX], tile)) {
+                surroundingFloors.add(new Position(newX, newY));
             }
         }
-        return count;
+        return surroundingFloors;
     }
 
     private static long convertSubstringToNumber(String input) {
@@ -75,15 +137,57 @@ public class Game {
     }
 
     public Game() {
-        //ter.initialize(WIDTH, HEIGHT);
-        wallNumbers = 0;
+        ter.initialize(WIDTH, HEIGHT);
         tiles = new TETile[HEIGHT][WIDTH];
+        unionFind = new UnionFind();
     }
 
     /**
      * Method used for playing a fresh game. The game should start from the main menu.
      */
     public void playWithKeyboard() {
+    }
+
+    // 不断地造墙
+    private void buildWall() {
+        int wallNumbers = 0;
+        while (wallNumbers < wallNumbersMax) {
+            Position p = getStartWall();
+            while (p != null) {
+                tiles[p.y][p.x] = Tileset.WALL;
+                wallNumbers += 1;
+                p = getNotWallLegalPosRandomlyByP(p);
+            }
+        }
+    }
+
+    // 不断地造地板
+    private void buildFloor(int i ,int j) {
+        if (tiles[i][j] !=Tileset.WALL) {
+            tiles[i][j] = Tileset.FLOOR;
+            unionFind.makeSet(new Position(j, i));
+            if (0 <= j - 1 && tiles[i][j - 1] == Tileset.FLOOR) {
+                unionFind.union(new Position(j, i), new Position(j - 1, i));
+            }
+            if (0 <= i - 1 && tiles[i - 1][j] == Tileset.FLOOR) {
+                unionFind.union(new Position(j, i), new Position(j, i - 1));
+            }
+        }
+    }
+
+    private void unifyFloor(int i, int j) {
+        ArrayList<Position> surroundingFloors = getSurroundingPositions(j, i, Tileset.FLOOR);
+        List<Position> floorsToUnify = surroundingFloors.stream().filter(p -> unionFind.getRank(p) < unionFind.maxRank).toList();
+
+        if (floorsToUnify.isEmpty())
+            return;
+        tiles[i][j] = Tileset.FLOOR;
+        unionFind.makeSet(new Position(j, i));
+        for (Position p : floorsToUnify)
+            unionFind.union(new Position(j, i), p);
+        surroundingFloors.removeAll(floorsToUnify);
+        if (!surroundingFloors.isEmpty())
+            unionFind.union(new Position(j, i), surroundingFloors.get(0));
     }
 
     /**
@@ -99,33 +203,29 @@ public class Game {
      * @return the 2D TETile[][] representing the state of the world
      */
     public TETile[][] playWithInputString(String input) {
+        // 初始化随机数。
         long seed = convertSubstringToNumber(input);
         RANDOM = new Random(seed);
-        while (wallNumbers < 500) {
-            Position start = getNotWallPosRandomly();
-            Position p = start;
-            while (p != null) {
-                tiles[p.y][p.x] = Tileset.WALL;
-                wallNumbers += 1;
-                p = getNotWallLegalPosRandomlyByP(p);
-            }
-        }
+        // 建造墙壁。
+        buildWall();
+        // 建造地板。
         for (int i = 0; i < HEIGHT; ++ i) {
             for (int j = 0;j < WIDTH; ++ j) {
-                if (tiles[i][j] !=Tileset.WALL) {
-                    tiles[i][j] = Tileset.FLOOR;
-                } else if (i > 0 && i < HEIGHT - 1 && j > 0 && j < WIDTH - 1){
-                    boolean horizontalLine = tiles[i][j - 1] == Tileset.WALL && tiles[i][j + 1] == Tileset.WALL;
-                    boolean verticalLine = tiles[i - 1][j] == Tileset.WALL && tiles[i + 1][j] == Tileset.WALL;
-                    if (horizontalLine || verticalLine) {
-                        tiles[i][j] = RANDOM.nextInt(25) == 0 ? Tileset.LOCKED_DOOR : Tileset.WALL;
-                    }
+                buildFloor(i, j);
+            }
+        }
+        // 把仍然分离的地板连接起来。
+        // 具体的方法就是如果你现在不在最大的那个集合里面，你你就需要链接。
+        for (int i = 0; i < HEIGHT; ++ i) {
+            for (int j = 0; j < WIDTH; ++ j) {
+                if (tiles[i][j] == Tileset.WALL) {
+                    unifyFloor(i, j);
                 }
             }
         }
-        //ter.renderFrame(tiles);
-
-        TETile[][] finalWorldFrame = this.tiles;
-        return finalWorldFrame;
+        // 渲染
+        ter.renderFrame(tiles);
+        // 返回
+        return this.tiles;
     }
 }
